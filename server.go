@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// CountryByIP ..
 func CountryByIP(w http.ResponseWriter, r *http.Request) {
 
 }
