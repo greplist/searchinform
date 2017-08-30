@@ -29,6 +29,21 @@ func (l *list) Head() *node {
 	return (*node)(atomic.LoadPointer(&l.head))
 }
 
+func (l *list) Insert(key string, value listValue) {
+	ptr := &node{
+		key:   key,
+		value: value,
+	}
+	new := unsafe.Pointer(ptr)
+	for {
+		old := atomic.LoadPointer(&l.head)
+		ptr.next = old
+		if atomic.CompareAndSwapPointer(&l.head, old, new) {
+			break
+		}
+	}
+}
+
 func (l *list) Get(key string) (value listValue, ok bool) {
 	for this := l.Head(); this != nil; this = this.Next() {
 		if this.key == key {
