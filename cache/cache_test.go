@@ -1,33 +1,30 @@
 package cache
 
-import "testing"
+import (
+	"strconv"
+	"testing"
+)
 
-func TestList(t *testing.T) {
+func TestCache(t *testing.T) {
 	t.Parallel()
 
-	entries := make([]*Entry, 4)
+	entries := make([]ValueType, 32)
 	for i := range entries {
-		entries[i] = &Entry{}
+		entries[i] = i
 	}
 
 	t.Run("insert+get", func(t *testing.T) {
-		l := &list{}
+		l := NewCache(4)
 
 		// positive
-		cases := []struct {
-			Key   string
-			Value listValue
-		}{
-			{Key: "zero", Value: entries[0]},
-			{Key: "one", Value: entries[1]},
-			{Key: "two", Value: entries[2]},
+		for _, entry := range entries {
+			key := strconv.Itoa(entry)
+			l.Insert(key, entry)
 		}
-		for _, testCase := range cases {
-			l.Insert(testCase.Key, testCase.Value)
-		}
-		for _, testCase := range cases {
-			if value, ok := l.Get(testCase.Key); !ok || value != testCase.Value {
-				t.Fatalf("Get `%s` failed: expected: %v, but %v %v", testCase.Key, testCase.Value, value, ok)
+		for _, entry := range entries {
+			key := strconv.Itoa(entry)
+			if value, ok := l.Get(key); !ok || value != entry {
+				t.Fatalf("Get `%s` failed: expected: %v, but %v %v", key, entry, value, ok)
 			}
 		}
 
@@ -40,7 +37,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("delete", func(t *testing.T) {
-		l := &list{}
+		l := NewCache(8)
 		l.Insert("zero", entries[0])
 		l.Insert("one", entries[1])
 		l.Insert("two", entries[2])
