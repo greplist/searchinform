@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"hash/fnv"
 	"sync/atomic"
 	"time"
@@ -19,6 +20,11 @@ type Entry struct {
 	val      ValueType
 	last     int64 // time of last data access (in UnixNano)
 	deadline int64 // in UnixNano
+}
+
+// Deadline - deadline in UnixNano
+func (e *Entry) Deadline() int64 {
+	return atomic.LoadInt64(&e.deadline)
 }
 
 // Cache - lock-free hash map
@@ -51,7 +57,7 @@ func (c *Cache) Get(key string) (value ValueType, ok bool) {
 	now := time.Now().UnixNano()
 
 	// check deadline
-	if deadline := atomic.LoadInt64(&entry.deadline); now > deadline {
+	if deadline := entry.Deadline(); now > deadline {
 		partition.Delete(key)
 		return
 	}
@@ -84,4 +90,38 @@ func (c *Cache) Insert(key string, value ValueType) {
 		deadline: now.Add(TTL).UnixNano(),
 	}
 	partition.Insert(key, entry)
+}
+
+// Cleaner - goroutine, which drop all elements after deadline
+func Cleaner(ctx context.Context, cache *Cache) {
+	wait := TTL
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(wait):
+		}
+
+		now := time.Now().UnixNano()
+
+		minDeadline := now + int64(TTL)
+		for i := range cache.partitions {
+			partition := &cache.partitions[i]
+			for entry := partition.Head(); entry != nil; entry.Next() {
+				deadline := entry.value.Deadline()
+
+				// remove if expired
+				if now > deadline {
+					partition.tryRemove(entry)
+				}
+
+				// update min deadline
+				if minDeadline > deadline {
+					minDeadline = deadline
+				}
+			}
+		}
+
+		wait = time.Duration(minDeadline - now)
+	}
 }
