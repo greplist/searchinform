@@ -12,7 +12,7 @@ const (
 )
 
 // ValueType ...
-type ValueType = int
+type ValueType = string
 
 // Entry - internal cache entry
 type Entry struct {

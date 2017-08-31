@@ -10,7 +10,7 @@ func TestCache(t *testing.T) {
 
 	entries := make([]ValueType, 32)
 	for i := range entries {
-		entries[i] = i
+		entries[i] = strconv.Itoa(i)
 	}
 
 	t.Run("insert+get", func(t *testing.T) {
@@ -18,11 +18,11 @@ func TestCache(t *testing.T) {
 
 		// positive
 		for _, entry := range entries {
-			key := strconv.Itoa(entry)
+			key := entry
 			l.Insert(key, entry)
 		}
 		for _, entry := range entries {
-			key := strconv.Itoa(entry)
+			key := entry
 			if value, ok := l.Get(key); !ok || value != entry {
 				t.Fatalf("Get `%s` failed: expected: %v, but %v %v", key, entry, value, ok)
 			}
