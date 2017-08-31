@@ -6,9 +6,9 @@ import (
 )
 
 // ListValue ...
-type listValue = Entry
+type listValue = *Entry
 
-// node of hlist
+// node of list
 type node struct {
 	next unsafe.Pointer // real type is *node
 
