@@ -1,4 +1,4 @@
 .PHONY: tests
 tests:
-	go test -v searchinform/cache \
+	go test -cover -v searchinform/cache \
 				searchinform/provider
