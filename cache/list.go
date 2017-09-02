@@ -43,18 +43,18 @@ func find(start *node, key string) *node {
 }
 
 func (l *list) tryRemove(entry *node) bool {
-	inderect := &l.head
+	indirect := &l.head
 
-	for this := loadNode(inderect); this != entry; this = loadNode(inderect) {
+	for this := loadNode(indirect); this != entry; this = loadNode(indirect) {
 		// already deleted by another thread
 		if this == nil {
 			return false
 		}
-		inderect = &this.next
+		indirect = &this.next
 	}
 
 	old, new := unsafe.Pointer(entry), atomic.LoadPointer(&entry.next)
-	return atomic.CompareAndSwapPointer(inderect, old, new)
+	return atomic.CompareAndSwapPointer(indirect, old, new)
 }
 
 func (l *list) Get(key string) (value listValue, ok bool) {
