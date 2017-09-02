@@ -167,6 +167,6 @@ func (r *ReqRate) rate(now int64) (sum int64) {
 }
 
 // Rate returns request number for the last minute
-func (r *ReqRate) Rate() int64 {
-	return r.rate(time.Now().Unix())
+func (r *ReqRate) Rate(now time.Time) int64 {
+	return r.rate(now.Unix())
 }
