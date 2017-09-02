@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+
+	"searchinform/cache"
 )
 
 var (
@@ -30,9 +34,32 @@ func NewController(conf *Config) *Controller {
 	}
 }
 
+// Init run all background jobs
+func (ctrl *Controller) Init() {
+	go cache.Cleaner(context.Background(), &ctrl.client.cache)
+}
+
 // CountryByIP ..
 func (ctrl *Controller) CountryByIP(w http.ResponseWriter, r *http.Request) {
+	host := r.FormValue("host")
+	if host == "" {
+		host = r.Host
+	}
 
+	country, err := ctrl.client.Resolve(host)
+	if err != nil {
+		msg := "Resolve err: " + err.Error()
+		ctrl.logger.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	body := &struct {
+		Host    string `json:"host"`
+		Country string `json:"country"`
+	}{Host: host, Country: country}
+
+	json.NewEncoder(w).Encode(body)
 }
 
 func main() {
@@ -45,6 +72,7 @@ func main() {
 	}
 
 	ctrl := NewController(conf)
+	ctrl.Init()
 
 	router := http.NewServeMux()
 	router.HandleFunc("/api/country", ctrl.CountryByIP)
