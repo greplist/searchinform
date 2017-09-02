@@ -1,7 +1,9 @@
 package provider
 
 import (
+	"encoding/json"
 	"errors"
+	"io"
 	"sync/atomic"
 	"time"
 )
@@ -13,8 +15,37 @@ var (
 
 // Provider ...
 type Provider struct {
-	Host    string
-	MaxRate int64 // max number of requests per minute
+	MaxRate    int64             `json:"max_rate"` // max number of requests per minute
+	Method     string            `json:"method"`
+	URLPattern string            `json:"url_pattern"`
+	Scheme     []string          `json:"scheme"`
+	Headers    map[string]string `json:"headers"`
+}
+
+// ParseBody returns country or error if body has invalid format
+func (p *Provider) ParseBody(r io.Reader) (string, error) {
+	var data map[string]interface{}
+	if err := json.NewDecoder(r).Decode(&data); err != nil {
+		return "", errors.New("Parse Body: json err: " + err.Error())
+	}
+
+	var value interface{} = data
+	for _, field := range p.Scheme {
+		m, ok := value.(map[string]interface{})
+		if !ok {
+			return "", errors.New("Invalid body format (field " + field + " type)")
+		}
+		value, ok = m[field]
+		if !ok {
+			return "", errors.New("Invalid body: field `" + field + "` not found")
+		}
+	}
+
+	country, ok := value.(string)
+	if !ok {
+		return "", errors.New("Invalid body format (last field type)")
+	}
+	return country, nil
 }
 
 // ProvBlock - provider block for iterator
