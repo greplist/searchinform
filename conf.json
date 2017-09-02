@@ -1,0 +1,32 @@
+{
+    "cache": {
+        "npartitions": 256,
+        "ttl": "4m"
+    },
+    "providers": [
+        {
+            "name": "freegeoip.net",
+            "method": "GET",
+            "pattern": "http://freegeoip.net/json/%s",
+            "headers": {
+                "Authorization": "Token SomeToken"
+            },
+            "scheme": ["country_name"],
+            "max_rate": 128
+        }
+    ],
+    "http": {
+        "port": 8080,
+        "timeout": "1m",
+        "dial_timeout": "20s",
+        "keepalive_timeout": "45s",
+        "tls_handshake_timeout": "5s"
+    },
+    "log": {
+        "prefix": "global : ",
+        "is_date": true,
+        "is_time": true,
+        "is_file": true,
+        "is_microseconds": false
+    }
+}

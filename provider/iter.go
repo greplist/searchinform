@@ -16,8 +16,9 @@ var (
 // Provider ...
 type Provider struct {
 	MaxRate    int64             `json:"max_rate"` // max number of requests per minute
+	Name       string            `json:"name"`
 	Method     string            `json:"method"`
-	URLPattern string            `json:"url_pattern"`
+	URLPattern string            `json:"pattern"`
 	Scheme     []string          `json:"scheme"`
 	Headers    map[string]string `json:"headers"`
 }
