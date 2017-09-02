@@ -10,9 +10,7 @@ import (
 const (
 	blockSize = 64
 	quant     = time.Second
-	interval  = time.Minute
-
-	nquants = int64(interval / quant)
+	nquants   = 60
 
 	blockTTL = 4 * blockSize // in seconds
 )
@@ -90,7 +88,7 @@ func (r *ReqRate) observe(now int64) {
 
 		if this == nil || this.offset > now {
 			block := blockFromPool()
-			block.offset = r.offset + (((now - r.offset) / nquants) * nquants)
+			block.offset = r.offset + (((now - r.offset) / blockSize) * blockSize)
 			block.next = unsafe.Pointer(this)
 
 			// register request in the new block
@@ -124,27 +122,44 @@ func (r *ReqRate) Observe(now time.Time) {
 }
 
 func (r *ReqRate) rate(now int64) (sum int64) {
+	// log.Println("Offset & Now: ", r.offset, now)
+
 	// help clean up ReqRate struct
 	r.clean(now)
 
 	// quanted time interval [since, until]
 	since, until := (now - nquants), now
+	// log.Println("Since & until:", since, until)
 
 	indirect := &r.head
 	for this := loadBlock(indirect); this != nil && this.offset <= until; this = loadBlock(indirect) {
+		// log.Println("Iter: block:", this, this.Next())
+
 		var left, right int64
-		if index := since - this.offset; 0 <= index && index < blockSize {
+		switch index := since - this.offset; {
+		case index <= 0:
+			left = 0
+		case index <= blockSize:
 			left = index
+		case index > blockSize:
+			left = blockSize
 		}
-		if index := until - this.offset; 0 <= index && index < blockSize {
-			right = index
+		switch lenght := until - this.offset + 1; {
+		case lenght < 0:
+			right = 0
+		case lenght <= blockSize:
+			right = lenght
+		case lenght > blockSize:
+			right = blockSize
 		}
 
+		// log.Println("Iter: left & right: ", left, right)
 		counts := this.counts[left:right]
 		for i := range counts {
 			count := atomic.LoadInt64(&counts[i])
 			sum += count
 		}
+		// log.Println("Iter: sum: ", sum)
 
 		indirect = &this.next
 	}
