@@ -3,6 +3,11 @@ package cache
 import (
 	"strconv"
 	"testing"
+	"time"
+)
+
+const (
+	TTL = 4 * time.Minute
 )
 
 func TestCache(t *testing.T) {
@@ -14,7 +19,7 @@ func TestCache(t *testing.T) {
 	}
 
 	t.Run("insert+get", func(t *testing.T) {
-		l := NewCache(4)
+		l := NewCache(4, TTL)
 
 		// positive
 		for _, entry := range entries {
@@ -37,7 +42,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("delete", func(t *testing.T) {
-		l := NewCache(8)
+		l := NewCache(8, TTL)
 		l.Insert("zero", entries[0])
 		l.Insert("one", entries[1])
 		l.Insert("two", entries[2])

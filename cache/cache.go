@@ -7,11 +7,6 @@ import (
 	"time"
 )
 
-const (
-	// TTL - time to live of cache entry
-	TTL = 5 * time.Minute
-)
-
 // ValueType ...
 type ValueType = string
 
@@ -30,12 +25,14 @@ func (e *Entry) Deadline() int64 {
 // Cache - lock-free hash map
 type Cache struct {
 	partitions []list
+	ttl        time.Duration
 }
 
 // NewCache - create
-func NewCache(npartitions int) *Cache {
+func NewCache(npartitions int, ttl time.Duration) *Cache {
 	return &Cache{
 		partitions: make([]list, npartitions),
+		ttl:        ttl,
 	}
 }
 
@@ -87,14 +84,14 @@ func (c *Cache) Insert(key string, value ValueType) {
 	entry := &Entry{
 		val:      value,
 		last:     now.UnixNano(),
-		deadline: now.Add(TTL).UnixNano(),
+		deadline: now.Add(c.ttl).UnixNano(),
 	}
 	partition.Insert(key, entry)
 }
 
 // Cleaner - goroutine, which drop all elements after deadline
 func Cleaner(ctx context.Context, cache *Cache) {
-	wait := TTL
+	wait := cache.ttl
 	for {
 		select {
 		case <-ctx.Done():
@@ -104,7 +101,7 @@ func Cleaner(ctx context.Context, cache *Cache) {
 
 		now := time.Now().UnixNano()
 
-		minDeadline := now + int64(TTL)
+		minDeadline := now + int64(cache.ttl)
 		for i := range cache.partitions {
 			partition := &cache.partitions[i]
 			for entry := partition.Head(); entry != nil; entry.Next() {
