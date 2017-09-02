@@ -5,6 +5,13 @@
     },
     "providers": [
         {
+            "name": "geoip.nekudo.com",
+            "method": "GET",
+            "pattern": "http://geoip.nekudo.com/api/%s/en/json",
+            "scheme": ["country", "name"],
+            "max_rate": 1
+        },
+        {
             "name": "freegeoip.net",
             "method": "GET",
             "pattern": "http://freegeoip.net/json/%s",
