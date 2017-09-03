@@ -59,6 +59,7 @@ func (ctrl *Controller) resolve(host string) (string, error) {
 	}
 
 	if country, ok := ctrl.cache.Get(addr); ok {
+		ctrl.logger.Printf("Resolve [%v]: addr [%v]: cache hit: country is `%v`", host, addr, country)
 		return country, nil
 	}
 
@@ -74,6 +75,7 @@ func (ctrl *Controller) resolve(host string) (string, error) {
 
 	ctrl.cache.Insert(addr, country)
 
+	ctrl.logger.Printf("Resolve [%v]: addr [%v]: provider [%v]: country `%v`", host, addr, provider.Name, country)
 	return country, nil
 }
 
