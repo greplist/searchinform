@@ -24,13 +24,17 @@ Clone git repository:
 
 ### Build and Run server
 For run server, you may run:
+
     make
 
 Now server is running with default config, is listenning port 8080, so you may test it:
+
     curl 127.0.0.1:8080/api/country?host=google.com
     curl 127.0.0.1:8080/api/country?host=google.com
     curl 127.0.0.1:8080/api/country?host=192.140.253.113
 
 After 5 minutes, you may run:
+
     curl 127.0.0.1:8080/api/country?host=google.com
+
 And server returns country for this host from real server, not from cache (cache TTL test)
