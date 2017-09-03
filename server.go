@@ -8,10 +8,10 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 
 	"searchinform/cache"
+	"searchinform/provider"
 )
 
 var (
@@ -24,21 +24,15 @@ func init() {
 
 // Controller - main struct with all dependences
 type Controller struct {
-	client Client
-	logger log.Logger
-}
-
-// NewController - constructor for Controller struct
-func NewController(conf *Config) *Controller {
-	return &Controller{
-		client: *NewClient(conf),
-		logger: *log.New(os.Stdout, conf.Log.Prefix, conf.LogFlags()),
-	}
+	cache     cache.Cache
+	providers provider.Iterator
+	client    HTTPClient
+	logger    log.Logger
 }
 
 // Init run all background jobs
 func (ctrl *Controller) Init() {
-	go cache.Cleaner(context.Background(), &ctrl.client.cache)
+	go cache.Cleaner(context.Background(), &ctrl.cache)
 }
 
 func (ctrl *Controller) error(w http.ResponseWriter, msg string, code int) {
@@ -57,6 +51,32 @@ func lookup(host string) (addr string, err error) {
 	return addrs[0], nil
 }
 
+// resolve returns country of this host
+func (ctrl *Controller) resolve(host string) (string, error) {
+	addr, err := lookup(host)
+	if err != nil {
+		return "", errors.New("host lookup err : " + err.Error())
+	}
+
+	if country, ok := ctrl.cache.Get(addr); ok {
+		return country, nil
+	}
+
+	provider, err := ctrl.providers.Next()
+	if err != nil {
+		return "", errors.New("providers iter err : " + err.Error())
+	}
+
+	country, err := ctrl.client.Resolve(provider, addr)
+	if err != nil {
+		return "", errors.New("http client err : " + err.Error())
+	}
+
+	ctrl.cache.Insert(addr, country)
+
+	return country, nil
+}
+
 // CountryByIP ..
 func (ctrl *Controller) CountryByIP(w http.ResponseWriter, r *http.Request) {
 	host := r.FormValue("host")
@@ -64,13 +84,7 @@ func (ctrl *Controller) CountryByIP(w http.ResponseWriter, r *http.Request) {
 		host = r.Host
 	}
 
-	ip, err := lookup(host)
-	if err != nil {
-		ctrl.error(w, "Lookup err: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	country, err := ctrl.client.Resolve(ip)
+	country, err := ctrl.resolve(host)
 	if err != nil {
 		ctrl.error(w, "Resolve err: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -93,7 +107,7 @@ func main() {
 		log.Fatalln("Parse err:", err)
 	}
 
-	ctrl := NewController(conf)
+	ctrl := NewFactory(conf).NewController()
 	ctrl.Init()
 
 	router := http.NewServeMux()
