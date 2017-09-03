@@ -13,6 +13,9 @@ http://freegeoip.net/, http://geoip.nekudo.com (список можно допо
 Настройки параметров кэша и список провайдеров необходимо хранить/задавать в
 конфигурационном файле.
 
+### Golang
+We use Golang 1.9 for this project, so install this version of Go.
+
 ### Start with Project
 Clone git repository:
 
