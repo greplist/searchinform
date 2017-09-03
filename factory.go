@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"searchinform/cache"
-	"searchinform/provider"
+	"github.com/searchinform/cache"
+	"github.com/searchinform/provider"
 )
 
 // Duration - custom duration

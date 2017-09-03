@@ -12,5 +12,5 @@ build: searchinform
 
 .PHONY: tests
 tests:
-	go test -cover -v searchinform/cache \
-				searchinform/provider
+	go test -cover -v github.com/searchinform/cache \
+						github.com/searchinform/provider

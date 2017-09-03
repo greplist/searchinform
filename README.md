@@ -16,7 +16,8 @@ http://freegeoip.net/, http://geoip.nekudo.com (список можно допо
 ### Start with Project
 Clone git repository:
 
-    cd $GOPATH/src
+    mkdir -p $GOPATH/src/github.com/
+    cd $GOPATH/src/github.com/
     git clone https://github.com/greplist/searchinform.git
     cd searchinform/
 

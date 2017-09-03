@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"searchinform/cache"
-	"searchinform/provider"
+	"github.com/searchinform/cache"
+	"github.com/searchinform/provider"
 )
 
 var (

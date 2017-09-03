@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"searchinform/provider"
+	"github.com/searchinform/provider"
 )
 
 // HTTPClient - custom http client
